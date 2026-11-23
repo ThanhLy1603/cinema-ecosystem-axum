@@ -7,7 +7,7 @@ use common::{get_json, router_for, UNREACHABLE_DATABASE_URL};
 async fn database_error_is_mapped_to_internal_error() {
    let (status, body) = get_json(router_for(UNREACHABLE_DATABASE_URL), "/api/v1/cinemas/public/cities").await;
    assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR);
-   assert_eq!(body["errorCode"], "INTERNAL_ERROR");
+   assert_eq!(body["errorCode"], "INTERNAL_SERVER_ERROR");
 }
 
 #[tokio::test]
