@@ -2,6 +2,7 @@ use std::env;
 use std::fmt;
 
 const MIN_JWT_SECRET_BYTES: usize = 32;
+const DEFAULT_GOOGLE_CLIENT_ID: &str = "115438259381-urao23pd5ef6utl2an4rekritsmcf7hl.apps.googleusercontent.com";
 
 #[derive(Clone)]
 pub struct JwtConfig {
@@ -55,6 +56,7 @@ pub struct AppConfig {
    pub cookie_secure: bool,
    pub bcrypt_cost: u32,
    pub frontend_base_url: String,
+   pub google_client_id: String,
    pub mail: MailConfig,
 }
 
@@ -97,6 +99,7 @@ impl AppConfig {
          cookie_secure: env_or("COOKIE_SECURE", "false").eq_ignore_ascii_case("true"),
          bcrypt_cost: 12,
          frontend_base_url: env_or("FRONTEND_BASE_URL", "http://localhost:5173"),
+         google_client_id: env_or("GOOGLE_CLIENT_ID", DEFAULT_GOOGLE_CLIENT_ID),
          mail,
       })
    }

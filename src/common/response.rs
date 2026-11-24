@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -49,9 +49,36 @@ impl ApiResponse<()> {
    }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct PageResponse<T> {
+   pub content: Vec<T>,
+   pub page: i64,
+   pub size: i64,
+   pub total_elements: i64,
+   pub total_pages: i64,
+}
+
+impl<T> PageResponse<T> {
+   pub fn of(content: Vec<T>, page: i64, size: i64, total_elements: i64) -> PageResponse<T> {
+      let total_pages: i64 = if size <= 0 { 0 } else { (total_elements + size - 1) / size };
+      PageResponse { content, page, size, total_elements, total_pages }
+   }
+}
+
 #[cfg(test)]
 mod tests {
-   use super::ApiResponse;
+   use super::{ApiResponse, PageResponse};
+
+   #[test]
+   fn page_response_computes_total_pages_and_uses_camel_case() {
+      let page_response: PageResponse<i32> = PageResponse::of(vec![1, 2], 0, 2, 5);
+      assert_eq!(page_response.total_pages, 3);
+      let value: serde_json::Value = serde_json::to_value(&page_response).unwrap();
+      assert_eq!(value["totalElements"], 5);
+      assert_eq!(value["totalPages"], 3);
+      assert_eq!(PageResponse::<i32>::of(vec![], 0, 20, 0).total_pages, 0);
+   }
 
    #[test]
    fn success_serializes_camel_case_and_omits_error_code() {

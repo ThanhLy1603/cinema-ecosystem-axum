@@ -15,3 +15,10 @@ pub async fn find_assigned_branches(
    .fetch_all(executor)
    .await
 }
+
+pub async fn find_assigned_cinema_ids(executor: impl PgExecutor<'_>, user_id: i64) -> Result<Vec<i64>, sqlx::Error> {
+   sqlx::query_scalar::<_, i64>("SELECT cinema_id FROM user_branch_assignments WHERE user_id = $1 ORDER BY cinema_id")
+      .bind(user_id)
+      .fetch_all(executor)
+      .await
+}

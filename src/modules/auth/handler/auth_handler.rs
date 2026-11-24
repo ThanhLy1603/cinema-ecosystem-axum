@@ -7,6 +7,7 @@ use crate::common::error::AppError;
 use crate::common::extract::{ApiJson, ClientInfo};
 use crate::common::response::ApiResponse;
 use crate::modules::auth::dto::request::ForgotPasswordRequest;
+use crate::modules::auth::dto::request::GoogleLoginRequest;
 use crate::modules::auth::dto::request::LoginRequest;
 use crate::modules::auth::dto::request::RegisterRequest;
 use crate::modules::auth::dto::request::ResetPasswordRequest;
@@ -21,6 +22,7 @@ use crate::modules::auth::security::REFRESH_TOKEN_COOKIE;
 use crate::modules::auth::service::auth_service;
 use crate::modules::auth::service::auth_service::REFRESH_IN_PROGRESS_ERROR_CODE;
 use crate::modules::auth::service::email_verification_service;
+use crate::modules::auth::service::google_auth_service;
 use crate::modules::auth::service::password_reset_service;
 use crate::state::AppState;
 
@@ -54,6 +56,25 @@ pub async fn login(
 ) -> Result<(CookieJar, Json<ApiResponse<LoginResponse>>), AppError> {
    let login_command = login_request.validate()?;
    let auth_session = auth_service::login(&app_state, login_command, &client_info).await?;
+   let response_body: ApiResponse<LoginResponse> =
+      ApiResponse::success_with_message("Đăng nhập thành công", auth_session.to_login_response());
+   let cookie_jar: CookieJar = session_cookies::add_session_cookies(
+      cookie_jar,
+      auth_session.access_token,
+      auth_session.refresh_token,
+      &SessionCookieSettings::from_config(&app_state.app_config),
+   );
+   Ok((cookie_jar, Json(response_body)))
+}
+
+pub async fn login_with_google(
+   State(app_state): State<AppState>,
+   cookie_jar: CookieJar,
+   client_info: ClientInfo,
+   ApiJson(google_login_request): ApiJson<GoogleLoginRequest>,
+) -> Result<(CookieJar, Json<ApiResponse<LoginResponse>>), AppError> {
+   let google_login_command = google_login_request.validate()?;
+   let auth_session = google_auth_service::login(&app_state, google_login_command, &client_info).await?;
    let response_body: ApiResponse<LoginResponse> =
       ApiResponse::success_with_message("Đăng nhập thành công", auth_session.to_login_response());
    let cookie_jar: CookieJar = session_cookies::add_session_cookies(

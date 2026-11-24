@@ -1,5 +1,6 @@
 mod change_password_request;
 mod forgot_password_request;
+mod google_login_request;
 mod login_request;
 mod register_request;
 mod reset_password_request;
@@ -9,6 +10,7 @@ mod verify_email_request;
 
 pub use change_password_request::{ChangePasswordCommand, ChangePasswordRequest};
 pub use forgot_password_request::{ForgotPasswordCommand, ForgotPasswordRequest};
+pub use google_login_request::{GoogleLoginCommand, GoogleLoginRequest};
 pub use login_request::{LoginCommand, LoginRequest};
 pub use register_request::{RegisterCommand, RegisterRequest};
 pub use reset_password_request::{ResetPasswordCommand, ResetPasswordRequest};

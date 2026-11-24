@@ -86,6 +86,22 @@ pub async fn insert_user(
    .await
 }
 
+pub async fn insert_google_user(
+   executor: impl PgExecutor<'_>,
+   email: &str,
+   full_name: &str,
+   avatar_url: Option<&str>,
+) -> Result<i64, sqlx::Error> {
+   sqlx::query_scalar::<_, i64>(
+      "INSERT INTO users (email, full_name, avatar_url, email_verified) VALUES ($1, $2, $3, TRUE) RETURNING id",
+   )
+   .bind(email)
+   .bind(full_name)
+   .bind(avatar_url)
+   .fetch_one(executor)
+   .await
+}
+
 pub async fn update_login_state(executor: impl PgExecutor<'_>, user_record: &UserRecord) -> Result<(), sqlx::Error> {
    sqlx::query(
       "UPDATE users SET failed_login_attempts = $2, status = $3, locked_until = $4, last_login_at = $5, \

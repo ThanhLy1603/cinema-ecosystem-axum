@@ -9,12 +9,14 @@ use cinema_ecosystem_axum::app::build_router;
 use cinema_ecosystem_axum::config::{AppConfig, JwtConfig, MailConfig};
 use cinema_ecosystem_axum::infrastructure::mailer::{Mailer, OutgoingMail};
 use cinema_ecosystem_axum::infrastructure::{database, redis};
+use cinema_ecosystem_axum::modules::auth::GoogleIdTokenVerifier;
 use cinema_ecosystem_axum::state::AppState;
 use http_body_util::BodyExt;
 use tower::ServiceExt;
 
 pub const UNREACHABLE_DATABASE_URL: &str = "postgres://nobody@127.0.0.1:1/none";
 pub const TEST_JWT_SECRET: &str = "test-secret-test-secret-test-secret-1234";
+pub const TEST_GOOGLE_CLIENT_ID: &str = "test-client.apps.googleusercontent.com";
 pub const UNREACHABLE_REDIS_URL: &str = "redis://127.0.0.1:1";
 
 pub fn test_config(database_url: &str, redis_url: &str) -> AppConfig {
@@ -31,6 +33,7 @@ pub fn test_config(database_url: &str, redis_url: &str) -> AppConfig {
       cookie_secure: false,
       bcrypt_cost: 4,
       frontend_base_url: "http://localhost:5173".to_string(),
+      google_client_id: TEST_GOOGLE_CLIENT_ID.to_string(),
       mail: MailConfig {
          host: "localhost".to_string(),
          port: 1025,
@@ -54,6 +57,18 @@ pub fn test_app(database_url: &str, redis_url: &str) -> TestApp {
    let redis_client = redis::create_redis_client(redis_url).expect("redis url");
    let (mailer, outbox) = Mailer::recording();
    let app_state: AppState = AppState::new(app_config, pg_pool, redis_client, mailer).expect("app state");
+   let router: Router = build_router(app_state.clone(), &["http://localhost:3000".to_string()]);
+   TestApp { router, app_state, outbox }
+}
+
+pub fn test_app_with_google_keys(database_url: &str, redis_url: &str, jwk_set: jsonwebtoken::jwk::JwkSet) -> TestApp {
+   let app_config: AppConfig = test_config(database_url, redis_url);
+   let pg_pool = database::create_lazy_pg_pool(database_url).expect("database url");
+   let redis_client = redis::create_redis_client(redis_url).expect("redis url");
+   let (mailer, outbox) = Mailer::recording();
+   let mut app_state: AppState = AppState::new(app_config, pg_pool, redis_client, mailer).expect("app state");
+   app_state.google_id_token_verifier =
+      Arc::new(GoogleIdTokenVerifier::with_static_keys(TEST_GOOGLE_CLIENT_ID, jwk_set));
    let router: Router = build_router(app_state.clone(), &["http://localhost:3000".to_string()]);
    TestApp { router, app_state, outbox }
 }

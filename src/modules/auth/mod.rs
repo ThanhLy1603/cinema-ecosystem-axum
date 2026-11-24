@@ -12,13 +12,17 @@ use axum::Router;
 
 use crate::state::AppState;
 
-pub use security::{AuthenticatedUser, JwtService, PasswordService};
+pub use security::{AuthenticatedUser, GoogleIdTokenVerifier, JwtService, PasswordService};
+pub use service::branch_access_service::{
+   assert_can_access_cinema, evict_branch_scope, resolve_branch_scope, BranchScope,
+};
 pub use service::{delete_expired_tokens, spawn_token_cleanup};
 
 pub fn router() -> Router<AppState> {
    Router::new()
       .route("/auth/register", post(handler::auth_handler::register))
       .route("/auth/login", post(handler::auth_handler::login))
+      .route("/auth/google", post(handler::auth_handler::login_with_google))
       .route("/auth/refresh-token", post(handler::auth_handler::refresh_token))
       .route("/auth/forgot-password", post(handler::auth_handler::forgot_password))
       .route("/auth/reset-password", post(handler::auth_handler::reset_password))
